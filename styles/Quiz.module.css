@@ -1,0 +1,22 @@
+.radioOption {
+    margin-bottom: 10px;
+  }
+  
+  /* No highlights before user submits */
+  .defaultOption {
+    color: inherit; /* or #333, etc. */
+  }
+  
+  /* If user chose the incorrect statement (which is the *correct* choice),
+     or we are showing the actual incorrect statement after submission */
+  .correctChoice {
+    color: green;
+    font-weight: bold;
+  }
+  
+  /* If user incorrectly chose a correct statement */
+  .wrongChoice {
+    color: red;
+    font-weight: bold;
+  }
+  
