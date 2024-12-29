@@ -1,16 +1,117 @@
-.quizContainer {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
+/* Container holding everything */
+.quizWrapper {
+    max-width: 400px;
+    margin: 2rem auto;
+    font-family: "Arial", sans-serif;
+    color: #333;
   }
   
-  /* Radio options */
-  .radioOption {
-    margin-bottom: 10px;
+  /* Title / Subtitle */
+  .quizTitle {
+    font-size: 1.8rem;
+    text-align: center;
+    margin: 0 0 0.25rem 0;
+    color: #FF6E52; /* A warm color that complements the gradient */
   }
   
+  .quizSubtitle {
+    font-size: 1rem;
+    text-align: center;
+    margin: 0 0 1.5rem 0;
+    font-weight: bold;
+    color: #555;
+  }
+  
+  /* The main card container */
+  .quizCard {
+    background-color: #fff;
+    border-radius: 12px;
+    overflow: hidden; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    /* We'll separate the gradient in the .quizHeader below */
+  }
+  
+  /* Gradient header for the card */
+  .quizHeader {
+    background: linear-gradient(to right, #ff7e5f, #feb47b);
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+  
+  /* The react-slick slider */
+  .quizSlider {
+    padding: 1rem;
+  }
+  
+  /* Each question/option label */
+  .quizOption {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-top: 1px solid #f1f1f1;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  /* Remove default radio appearance */
+  .quizOption input[type="radio"] {
+    display: none;
+  }
+  
+  /* Hover effect for unanswered quiz options */
+  .quizOption:hover {
+    background-color: #f9f9f9;
+  }
+  
+  /* The A/B/C badge */
+  .quizBadge {
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: 50%;
+    background-color: #ffe4d4; 
+    color: #ff7e5f;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+  }
+  
+  /* The main text for each option */
+  .quizText {
+    font-size: 1rem;
+    line-height: 1.3;
+    color: #555;
+    word-wrap: break-word; 
+    flex: 1; 
+  }
+  
+  /* Buttons container at bottom of quiz card */
+  .buttonGroup {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+  }
+  
+  .buttonGroup button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Final results container */
+  .resultContainer {
+    padding: 1rem;
+  }
+  
+  /* --------------------------------------------------- 
+     Highlight Classes 
+     (applied after user submits => correct/incorrect)
+  ----------------------------------------------------*/
   .defaultOption {
-    color: inherit;
+    /* No special color before submission */
   }
   
   .correctChoice {
@@ -21,33 +122,4 @@
   .wrongChoice {
     color: red;
     font-weight: bold;
-  }
-  
-  /* Bottom button group */
-  .buttonGroup {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 1rem;
-  }
-  
-  .buttonGroup button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  /* Score/Results container */
-  .resultContainer {
-    background-color: #f1f1f1;
-    padding: 1rem;
-    margin-top: 2rem;
-    border-radius: 6px;
-  }
-  
-  /* Hide slick's default dots/arrows if desired */
-  .slick-dots {
-    display: none !important;
-  }
-  .slick-arrow {
-    display: none !important;
-  }
-  
+  }  
