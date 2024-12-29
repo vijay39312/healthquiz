@@ -3,7 +3,7 @@ import { correctStatements, incorrectStatements } from "../data/statements";
 import Slider from "react-slick";
 import styles from "../styles/Quiz.module.css";
 
-// Utility: generate 3 random sets (2 correct + 1 incorrect each)
+// Utility to generate 3 sets (2 correct + 1 incorrect)
 function getRandomSets(correct, incorrect) {
   const shuffledCorrect = [...correct].sort(() => 0.5 - Math.random());
   const shuffledIncorrect = [...incorrect].sort(() => 0.5 - Math.random());
@@ -25,13 +25,13 @@ export default function QuizCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const sliderRef = useRef(null);
 
-  // Generate the quiz sets on initial mount
+  // Generate sets on mount
   useEffect(() => {
     const sets = getRandomSets(correctStatements, incorrectStatements);
     setQuizSets(sets);
   }, []);
 
-  // Slider settings (disable built-in arrows/dots, no swipe)
+  // react-slick settings
   const sliderSettings = {
     dots: false,
     arrows: false,
@@ -43,7 +43,7 @@ export default function QuizCarousel() {
     beforeChange: (oldIndex, newIndex) => setCurrentSlide(newIndex),
   };
 
-  // Handle user selecting an answer
+  // When user selects an option
   const handleChange = (setIndex, statement) => {
     setAnswers((prev) => ({
       ...prev,
@@ -51,19 +51,15 @@ export default function QuizCarousel() {
     }));
   };
 
-  // "Next" button
+  // Next/Prev/Done logic
   const handleNext = () => {
     if (answers[currentSlide]) {
       sliderRef.current.slickNext();
     }
   };
-
-  // "Previous" button
   const handlePrev = () => {
     sliderRef.current.slickPrev();
   };
-
-  // "Done" button → calculate score, show final results
   const handleDone = () => {
     if (answers[currentSlide]) {
       let newScore = 0;
@@ -77,20 +73,17 @@ export default function QuizCarousel() {
     }
   };
 
-  // Reset the entire quiz
+  // Reset everything
   const resetQuiz = () => {
     const newSets = getRandomSets(correctStatements, incorrectStatements);
     setQuizSets(newSets);
     setAnswers({});
     setScore(null);
     setCurrentSlide(0);
-    // Move the slider back to the first slide
-    if (sliderRef.current) {
-      sliderRef.current.slickGoTo(0);
-    }
+    sliderRef.current?.slickGoTo(0);
   };
 
-  // Determine the CSS class for each statement after submission
+  // Determine how to highlight statements
   const getStatementClass = (statement, setIndex) => {
     if (score === null) return styles.defaultOption;
 
@@ -98,41 +91,26 @@ export default function QuizCarousel() {
     const isIncorrectStmt = incorrectStatements.includes(statement);
     const isChosen = userChoice === statement;
 
-    // User chose the incorrect statement => correct => highlight
-    if (isChosen && isIncorrectStmt) {
-      return styles.correctChoice;
-    }
-    // User chose a correct statement => wrong
-    if (isChosen && !isIncorrectStmt) {
-      return styles.wrongChoice;
-    }
-    // The actual incorrect statement (not chosen) => show correct
-    if (!isChosen && isIncorrectStmt) {
-      return styles.correctChoice;
-    }
+    // If user chose the incorrect statement => correct => green
+    if (isChosen && isIncorrectStmt) return styles.correctChoice;
+    // If user chose a correct statement => wrong => red
+    if (isChosen && !isIncorrectStmt) return styles.wrongChoice;
+    // If it’s the actual incorrect statement but not chosen => green
+    if (!isChosen && isIncorrectStmt) return styles.correctChoice;
     return styles.defaultOption;
   };
 
-  // If quizSets is still loading
   if (quizSets.length === 0) return null;
 
   const totalSets = quizSets.length;
   const isLastSlide = currentSlide === totalSets - 1;
   const userHasAnsweredCurrent = !!answers[currentSlide];
 
-  // Slides for the quiz
+  // Build slides
   const quizSlides = quizSets.map((set, setIndex) => (
     <div key={setIndex}>
-      {/* 
-        We could show a dynamic subheader for each set if you like,
-        but let's keep it minimal — just the options below
-      */}
       {set.map((statement, stmtIndex) => (
-        <label
-          key={stmtIndex}
-          className={styles.quizOption}
-        >
-          {/* Hidden radio for selection */}
+        <label className={styles.quizOption} key={stmtIndex}>
           <input
             type="radio"
             name={`set-${setIndex}`}
@@ -141,11 +119,9 @@ export default function QuizCarousel() {
             onChange={() => handleChange(setIndex, statement)}
             disabled={score !== null}
           />
-          {/* A/B/C badge */}
           <span className={styles.quizBadge}>
-            {String.fromCharCode(65 + stmtIndex)} {/* 65 => 'A' */}
+            {String.fromCharCode(65 + stmtIndex)} {/* A, B, C, etc. */}
           </span>
-          {/* The statement text */}
           <span className={`${styles.quizText} ${getStatementClass(statement, setIndex)}`}>
             {statement}
           </span>
@@ -156,48 +132,47 @@ export default function QuizCarousel() {
 
   return (
     <div className={styles.quizWrapper}>
-      <h2 className={styles.quizTitle}>Health Quiz</h2>
+      {/* Main heading */}
+      <h2 className={styles.quizTitle}>
+        Two Truths and a Lie
+      </h2>
+      {/* Subheading */}
       <p className={styles.quizSubtitle}>
-        Identify the <strong>incorrect</strong> statement in each set.
+        How much do you know about your body?
       </p>
 
+      {/* Card container */}
       <div className={styles.quizCard}>
-        {/* Gradient header on top of the card */}
-        <div className={styles.quizHeader}>
-          <p>What’s the lie?</p>
+        {/* Reintroduce "What's the lie?" inside the card */}
+        <div className={styles.quizCardHeader}>
+          <p className={styles.quizCardHeaderText}>What’s the lie?</p>
         </div>
 
-        {/* If the quiz is still in progress, show the Slider */}
+        {/* If quiz not finished, show the Slider + nav buttons */}
         {score === null && (
-          <Slider
-            ref={sliderRef}
-            {...sliderSettings}
-            className={styles.quizSlider}
-          >
-            {quizSlides}
-          </Slider>
+          <>
+            <Slider ref={sliderRef} {...sliderSettings} className={styles.quizSlider}>
+              {quizSlides}
+            </Slider>
+
+            <div className={styles.buttonGroup}>
+              <button onClick={handlePrev} disabled={currentSlide === 0}>
+                Previous
+              </button>
+              {!isLastSlide ? (
+                <button onClick={handleNext} disabled={!userHasAnsweredCurrent}>
+                  Next
+                </button>
+              ) : (
+                <button onClick={handleDone} disabled={!userHasAnsweredCurrent}>
+                  Done
+                </button>
+              )}
+            </div>
+          </>
         )}
 
-        {/* Show navigation buttons if the quiz isn't finished */}
-        {score === null && (
-          <div className={styles.buttonGroup}>
-            <button onClick={handlePrev} disabled={currentSlide === 0}>
-              Previous
-            </button>
-
-            {!isLastSlide ? (
-              <button onClick={handleNext} disabled={!userHasAnsweredCurrent}>
-                Next
-              </button>
-            ) : (
-              <button onClick={handleDone} disabled={!userHasAnsweredCurrent}>
-                Done
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* If quiz is done, show final results (all sets) */}
+        {/* If quiz finished, show final results */}
         {score !== null && (
           <div className={styles.resultContainer}>
             <p>
@@ -230,10 +205,11 @@ export default function QuizCarousel() {
                 ))}
               </div>
             ))}
-
-            <button onClick={resetQuiz} style={{ marginTop: 20 }}>
-              Try Again
-            </button>
+            <div className={styles.buttonGroup}>
+                <button onClick={resetQuiz} style={{ marginTop: 20 }}>
+                    Try Again
+                </button>
+            </div>
           </div>
         )}
       </div>
