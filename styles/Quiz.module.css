@@ -1,22 +1,53 @@
-.radioOption {
+.quizContainer {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /* Radio options */
+  .radioOption {
     margin-bottom: 10px;
   }
   
-  /* No highlights before user submits */
   .defaultOption {
-    color: inherit; /* or #333, etc. */
+    color: inherit;
   }
   
-  /* If user chose the incorrect statement (which is the *correct* choice),
-     or we are showing the actual incorrect statement after submission */
   .correctChoice {
     color: green;
     font-weight: bold;
   }
   
-  /* If user incorrectly chose a correct statement */
   .wrongChoice {
     color: red;
     font-weight: bold;
+  }
+  
+  /* Bottom button group */
+  .buttonGroup {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+  }
+  
+  .buttonGroup button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Score/Results container */
+  .resultContainer {
+    background-color: #f1f1f1;
+    padding: 1rem;
+    margin-top: 2rem;
+    border-radius: 6px;
+  }
+  
+  /* Hide slick's default dots/arrows if desired */
+  .slick-dots {
+    display: none !important;
+  }
+  .slick-arrow {
+    display: none !important;
   }
   

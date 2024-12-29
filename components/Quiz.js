@@ -1,37 +1,49 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { correctStatements, incorrectStatements } from "../data/statements";
+import Slider from "react-slick";
 import styles from "../styles/Quiz.module.css";
 
+// Utility to get 3 random sets: each set has 2 correct + 1 incorrect
 function getRandomSets(correct, incorrect) {
-  // Shuffle arrays to randomize picking
   const shuffledCorrect = [...correct].sort(() => 0.5 - Math.random());
   const shuffledIncorrect = [...incorrect].sort(() => 0.5 - Math.random());
 
   const sets = [];
-  // We want 3 sets, each set has 2 correct statements + 1 incorrect
   for (let i = 0; i < 3; i++) {
     const twoCorrect = shuffledCorrect.slice(i * 2, i * 2 + 2);
     const oneIncorrect = shuffledIncorrect[i];
-    const combined = [...twoCorrect, oneIncorrect];
-    // Shuffle the 3 statements so their order is random
-    const shuffledSet = combined.sort(() => 0.5 - Math.random());
-    sets.push(shuffledSet);
+    const combined = [...twoCorrect, oneIncorrect].sort(() => 0.5 - Math.random());
+    sets.push(combined);
   }
   return sets;
 }
 
-export default function Quiz() {
+export default function QuizCarousel() {
   const [quizSets, setQuizSets] = useState([]);
-  const [answers, setAnswers] = useState({}); // { setIndex: "chosenStatement" }
+  const [answers, setAnswers] = useState({}); // { setIndex: chosenStatement }
   const [score, setScore] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const sliderRef = useRef(null);
 
-  // Generate quiz sets on mount
+  // Generate new sets on initial load
   useEffect(() => {
     const sets = getRandomSets(correctStatements, incorrectStatements);
     setQuizSets(sets);
   }, []);
 
-  // Handle user selection
+  // Slider settings: no default arrows/dots, no swipe
+  const sliderSettings = {
+    dots: false,
+    arrows: false,
+    infinite: false,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    swipe: false,
+    beforeChange: (oldIndex, newIndex) => setCurrentSlide(newIndex),
+  };
+
+  // Handle radio input changes
   const handleChange = (setIndex, statement) => {
     setAnswers((prev) => ({
       ...prev,
@@ -39,91 +51,168 @@ export default function Quiz() {
     }));
   };
 
-  // On submit, calculate score
-  const handleSubmit = () => {
-    let newScore = 0;
-    quizSets.forEach((set, index) => {
-      const userChoice = answers[index];
-      // The user is "correct" if they chose the statement from the incorrect list
-      if (userChoice && incorrectStatements.includes(userChoice)) {
-        newScore++;
-      }
-    });
-    setScore(newScore);
+  // Next button
+  const handleNext = () => {
+    if (answers[currentSlide]) {
+      sliderRef.current.slickNext();
+    }
   };
 
-  // Reset everything
+  // Previous button
+  const handlePrev = () => {
+    sliderRef.current.slickPrev();
+  };
+
+  // Done button -> calculate score & show final results
+  const handleDone = () => {
+    if (answers[currentSlide]) {
+      let newScore = 0;
+      quizSets.forEach((set, index) => {
+        const userChoice = answers[index];
+        if (userChoice && incorrectStatements.includes(userChoice)) {
+          newScore++;
+        }
+      });
+      setScore(newScore);
+    }
+  };
+
+  // Reset quiz & go back to first slide
   const resetQuiz = () => {
-    const sets = getRandomSets(correctStatements, incorrectStatements);
-    setQuizSets(sets);
+    const newSets = getRandomSets(correctStatements, incorrectStatements);
+    setQuizSets(newSets);
     setAnswers({});
     setScore(null);
+    setCurrentSlide(0);
+    if (sliderRef.current) {
+      sliderRef.current.slickGoTo(0); // This no longer fails because the slider is still mounted
+    }
   };
 
-  // Determine the CSS class for each statement after submission
+  // Decide which CSS class to apply for highlighting
   const getStatementClass = (statement, setIndex) => {
-    // If quiz hasn't been submitted yet, no color highlighting
     if (score === null) return styles.defaultOption;
 
     const userChoice = answers[setIndex];
-    const isIncorrectStatement = incorrectStatements.includes(statement);
+    const isIncorrectStmt = incorrectStatements.includes(statement);
     const isChosen = userChoice === statement;
 
-    // 1) User chose the "incorrect" statement => correct choice => highlight green
-    if (isChosen && isIncorrectStatement) {
+    // User chose the incorrect statement => correct => green
+    if (isChosen && isIncorrectStmt) {
       return styles.correctChoice;
     }
-    // 2) User chose a "correct" statement => highlight red
-    if (isChosen && !isIncorrectStatement) {
+    // User chose a correct statement => wrong => red
+    if (isChosen && !isIncorrectStmt) {
       return styles.wrongChoice;
     }
-    // 3) If this is the actual incorrect statement, but user did not choose it,
-    //    still highlight it green so the user knows the right answer
-    if (!isChosen && isIncorrectStatement) {
+    // Actual incorrect statement (not chosen) => show in green
+    if (!isChosen && isIncorrectStmt) {
       return styles.correctChoice;
     }
-
-    // 4) Everything else remains default (not chosen, and is a correct statement)
     return styles.defaultOption;
   };
 
-  return (
-    <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
-      <h1>Identify the Incorrect Statement</h1>
+  // If data isn’t ready yet
+  if (quizSets.length === 0) return null;
 
-      {quizSets.map((set, setIndex) => (
-        <div key={setIndex} style={{ marginBottom: 20 }}>
-          <h3>Set {setIndex + 1}</h3>
-          {set.map((statement, stmtIndex) => (
-            <div key={stmtIndex} className={styles.radioOption}>
-              <label className={getStatementClass(statement, setIndex)}>
-                <input
-                  type="radio"
-                  name={`set-${setIndex}`}
-                  value={statement}
-                  checked={answers[setIndex] === statement}
-                  onChange={() => handleChange(setIndex, statement)}
-                  style={{ marginRight: 8 }}
-                  disabled={score !== null} // disable radio after submitting
-                />
-                {statement}
-              </label>
-            </div>
-          ))}
+  const totalSets = quizSets.length;
+  const isLastSlide = currentSlide === totalSets - 1;
+  const userHasAnsweredCurrent = !!answers[currentSlide];
+
+  // The quiz slides for answering, one set per slide
+  const quizSlides = quizSets.map((set, setIndex) => (
+    <div key={setIndex}>
+      <h3>Set {setIndex + 1}</h3>
+      {set.map((statement, stmtIndex) => (
+        <div key={stmtIndex} className={styles.radioOption}>
+          <label className={getStatementClass(statement, setIndex)}>
+            <input
+              type="radio"
+              name={`set-${setIndex}`}
+              value={statement}
+              checked={answers[setIndex] === statement}
+              onChange={() => handleChange(setIndex, statement)}
+              disabled={score !== null}
+              style={{ marginRight: 8 }}
+            />
+            {statement}
+          </label>
         </div>
       ))}
+    </div>
+  ));
 
-      {score === null ? (
-        <button onClick={handleSubmit} style={{ marginRight: 10 }}>
-          Submit
-        </button>
-      ) : (
-        <>
+  return (
+    <div className={styles.quizContainer}>
+      {/* Updated headings */}
+      <h1>Health Quiz</h1>
+      <p>
+        Identify the <strong>incorrect</strong> statement in each set.
+      </p>
+
+      {/* 
+        1) We always mount the Slider, but hide it after the quiz is done.
+        2) This ensures sliderRef is never null. 
+      */}
+      <Slider
+        ref={sliderRef}
+        {...sliderSettings}
+        style={{ display: score !== null ? "none" : "block" }}
+      >
+        {quizSlides}
+      </Slider>
+
+      {/* The "Previous/Next/Done" buttons only appear if the quiz is in progress */}
+      {score === null && (
+        <div className={styles.buttonGroup}>
+          <button onClick={handlePrev} disabled={currentSlide === 0}>
+            Previous
+          </button>
+
+          {!isLastSlide ? (
+            <button onClick={handleNext} disabled={!userHasAnsweredCurrent}>
+              Next
+            </button>
+          ) : (
+            <button onClick={handleDone} disabled={!userHasAnsweredCurrent}>
+              Done
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Final results only appear once the quiz is done (score !== null) */}
+      {score !== null && (
+        <div className={styles.resultContainer}>
           <p>
-            Your score: {score} / {quizSets.length}
+            Your score: {score} / {totalSets}
           </p>
-          <button onClick={resetQuiz}>Try Again</button>
-        </>
+          <p>Below are all the sets with correct/incorrect highlights:</p>
+
+          {quizSets.map((set, setIndex) => (
+            <div key={setIndex} style={{ marginBottom: "1rem" }}>
+              <h3>Set {setIndex + 1}</h3>
+              {set.map((statement, stmtIndex) => (
+                <div key={stmtIndex} className={styles.radioOption}>
+                  <label className={getStatementClass(statement, setIndex)}>
+                    <input
+                      type="radio"
+                      name={`results-set-${setIndex}`}
+                      checked={answers[setIndex] === statement}
+                      readOnly
+                      style={{ marginRight: 8 }}
+                    />
+                    {statement}
+                  </label>
+                </div>
+              ))}
+            </div>
+          ))}
+
+          <button onClick={resetQuiz} style={{ marginTop: 20 }}>
+            Try Again
+          </button>
+        </div>
       )}
     </div>
   );
