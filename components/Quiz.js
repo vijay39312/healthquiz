@@ -17,7 +17,32 @@ function getRandomSets(correct, incorrect) {
   }
   return sets;
 }
-
+// Returns a ✅ or ❌ (or empty) based on correctness
+function getResultIcon(statement, setIndex, answers, incorrectStatements, score) {
+    // If quiz not submitted yet, no icon
+    if (score === null) return "";
+  
+    const userChoice = answers[setIndex];
+    const isIncorrectStmt = incorrectStatements.includes(statement);
+    const isChosen = userChoice === statement;
+  
+    // If user chose the incorrect statement => correct => green tick
+    if (isChosen && isIncorrectStmt) {
+      return "✅";
+    }
+    // If user chose a correct statement => wrong => red cross
+    if (isChosen && !isIncorrectStmt) {
+      return "❌";
+    }
+    // If it’s the actual incorrect statement but not chosen => also green tick
+    if (!isChosen && isIncorrectStmt) {
+      return "✅";
+    }
+  
+    // Otherwise, no icon
+    return "";
+  }
+  
 export default function QuizCarousel() {
   const [quizSets, setQuizSets] = useState([]);
   const [answers, setAnswers] = useState({}); // { setIndex: chosenStatement }
@@ -181,30 +206,37 @@ export default function QuizCarousel() {
             <p>Below are all the sets with correct/incorrect highlights:</p>
 
             {quizSets.map((set, setIndex) => (
-              <div key={setIndex} style={{ marginBottom: "1rem" }}>
-                <h3>Set {setIndex + 1}</h3>
-                {set.map((statement, stmtIndex) => (
-                  <label
-                    key={stmtIndex}
-                    className={styles.quizOption}
-                    style={{ cursor: "default" }}
-                  >
-                    <input
-                      type="radio"
-                      name={`results-set-${setIndex}`}
-                      checked={answers[setIndex] === statement}
-                      readOnly
-                    />
-                    <span className={styles.quizBadge}>
-                      {String.fromCharCode(65 + stmtIndex)}
-                    </span>
-                    <span className={`${styles.quizText} ${getStatementClass(statement, setIndex)}`}>
-                      {statement}
-                    </span>
-                  </label>
+                <div key={setIndex} style={{ marginBottom: "1rem" }}>
+                    <h3>Set {setIndex + 1}</h3>
+                    {set.map((statement, stmtIndex) => {
+                    const icon = getResultIcon(statement, setIndex, answers, incorrectStatements, score);
+
+                    return (
+                        <label
+                        key={stmtIndex}
+                        className={styles.quizOption}
+                        style={{ cursor: "default" }}
+                        >
+                        <input
+                            type="radio"
+                            name={`results-set-${setIndex}`}
+                            checked={answers[setIndex] === statement}
+                            readOnly
+                        />
+                        <span className={styles.quizBadge}>
+                            {String.fromCharCode(65 + stmtIndex)}
+                        </span>
+                        <span className={styles.quizText}>
+                            {statement}{" "}
+                            {/* Add the icon if present */}
+                            {icon && <span style={{ marginLeft: "0.5rem" }}>{icon}</span>}
+                        </span>
+                        </label>
+                    );
+                    })}
+                </div>
                 ))}
-              </div>
-            ))}
+
             <div className={styles.buttonGroup}>
                 <button onClick={resetQuiz} style={{ marginTop: 20 }}>
                     Try Again

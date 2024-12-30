@@ -56,13 +56,30 @@
   }
   
   /* Option label row */
-  .quizOption {
+  /*.quizOption {
     display: flex;
     align-items: center;
     padding: 1rem 1rem;
     border-top: 1px solid #f1f1f1;
     cursor: pointer;
     transition: background-color 0.2s ease;
+  }*/
+
+  /* 1. Ensure the label can accommodate background highlights */
+.quizOption {
+    position: relative;     /* For potential background / border layering */
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-top: 1px solid #f1f1f1;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  /* 2. Make the badge distinctly colored when selected */
+  .quizOption input[type="radio"]:checked + .quizBadge {
+    background-color: #6b4ee2; /* Purple */
+    color: #fff;              /* White text on purple */
   }
   
   /* Remove default radio appearance */
@@ -135,14 +152,14 @@
   .defaultOption {
     /* No highlight */
   }
-  .correctChoice {
+  /*.correctChoice {
     color: green;
     font-weight: bold;
   }
   .wrongChoice {
     color: red;
     font-weight: bold;
-  }
+  }*/
   
 /* The main card container with full rounded corners */
 .quizCard {
